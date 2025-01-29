@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Терминал</title>
+    <style>
+        body {
+            background: black;
+            color: green;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #terminal-container {
+            position: relative;
+            width: 800px;
+            max-height: 500px;
+            overflow: hidden;
+            border: 1px solid green;
+            padding: 10px;
+            background: black;
+        }
+        #terminal {
+            overflow-y: auto;
+            height: 400px;
+        }
+        img {
+            max-width: 100%;
+            max-height: 200px;
+            display: block;
+            margin: 10px 0;
+        }
+        input {
+            background: black;
+            color: green;
+            border: none;
+            outline: none;
+            width: calc(100% - 2px);
+            padding: 2px;
+            display: none;
+        }
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            background-color: green;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal-container">
+        <div id="terminal"></div>
+        <span id="location">/home$></span><span class="cursor"></span>
+        <input id="commandInput" autofocus>
+    </div>
+    <script>
+        const fileSystem = {
+            "home": {
+                "file1.txt": "Привет, это файл!",
+                "CanSomeoneHearMe.txt": "Ау, кто-нибудь слышит меня??? Пожалуйста!! Я здесь!!!\nЕсли вы читаете это, пожалуйста, найдите меня!!",
+                "projects": {
+                    "app.js": "console.log('Hello')",
+                    "README.md": "Это проектное описание",
+                    "logo.png": "./images/logo.png"
+                },
+                "documents": {
+                    "report.pdf": "Это отчет",
+                    "notes.txt": "Эти заметки важны",
+                    "null.png": "./images/null.png"
+                },
+                "random_files": {
+                    "note1.txt": "Заметка номер один",
+                    "image1.png": "./images/image1.png",
+                    "config.json": '{"version": "1.0"}'
+                }
+            },
+            "docs": {
+                "readme.txt": "Это документация",
+                "config.json": '{"version": "1.0"}',
+                "logs": {
+                    "error.log": "Ошибка в системе",
+                    "access.log": "Пользователь вошел в систему"
+                }
+            },
+            "system": {
+                "logs": {
+                    "error.log": "Ошибка в системе",
+                    "access.log": "Пользователь вошел в систему"
+                },
+                "settings": {
+                    "config.ini": "[Settings]\nlanguage=en\ntheme=dark",
+                    "preferences.txt": "Настройки пользователя"
+                }
+            }
+        };
+
+        let currentPath = ["home"];
+        let commandBuffer = "";
+
+        const terminal = document.getElementById("terminal");
+        const input = document.getElementById("commandInput");
+        const locationSpan = document.getElementById("location");
+
+        function printOutput(text) {
+            const outputDiv = document.createElement("div");
+            outputDiv.textContent = text;
+            terminal.appendChild(outputDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function printImage(url) {
+            const imgElement = document.createElement("img");
+            imgElement.src = url;
+            terminal.appendChild(imgElement);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function updateLocation() {
+            locationSpan.textContent = "/" + currentPath.join("/") + "$>";
+        }
+
+        function executeCommand(command) {
+            const parts = command.trim().split(" ");
+            const cmd = parts[0];
+
+            if (cmd === "ls") {
+                let dir = fileSystem;
+                for (let folder of currentPath) dir = dir[folder];
+                printOutput(Object.keys(dir).join("\n"));
+            } else if (cmd === "cd") {
+                const target = parts[1];
+                if (target === "..") {
+                    if (currentPath.length > 1) {
+                        currentPath.pop();
+                    } else {
+                        printOutput("Невозможно подняться выше корневой директории");
+                    }
+                } else if (target && fileSystem[target] && currentPath.length === 1) {
+                    currentPath = [target];
+                } else if (target && fileSystem[currentPath[0]][target]) {
+                    currentPath.push(target);
+                } else {
+                    printOutput("Папка не найдена");
+                }
+                updateLocation();
+            } else if (cmd === "cat") {
+                let dir = fileSystem;
+                for (let folder of currentPath) dir = dir[folder];
+                const fileName = parts[1];
+                if (dir[fileName] && typeof dir[fileName] === 'string' && !dir[fileName].startsWith("./")) {
+                    printOutput(dir[fileName]);
+                } else {
+                    printOutput("Файл не найден или это папка");
+                }
+            } else if (cmd === "run") {
+                const fileName = parts[1];
+                let dir = fileSystem;
+                for (let folder of currentPath) dir = dir[folder];
+                if ((fileName.endsWith(".txt") || fileName.endsWith(".png")) && dir[fileName]) {
+                    if (fileName.endsWith(".png")) {
+                        if (typeof dir[fileName] === 'string' && (dir[fileName].startsWith("http") || dir[fileName].startsWith("./"))) {
+                            printOutput(`Открываю изображение ${fileName}:`);
+                            printImage(dir[fileName]);
+                        } else {
+                            printOutput("Изображение не найдено");
+                        }
+                    } else {
+                        if (typeof dir[fileName] === 'string' && !dir[fileName].startsWith("./")) {
+                            printOutput(`Запуск файла ${fileName}:\n${dir[fileName]}`);
+                        } else {
+                            printOutput("Файл не найден или это папка");
+                        }
+                    }
+                } else {
+                    printOutput("Файл не найден или его нельзя запустить");
+                }
+            } else if (cmd === "pwd") {
+                printOutput("/" + currentPath.join("/"));
+            } else if (cmd === "help") {
+                printOutput("Доступные команды:\nls - список файлов\ncd [папка] - переход в папку\ncat [файл] - просмотр содержимого файла\nrun [файл] - запуск файла (только .txt и .png)\npwd - текущий путь\nhelp - справка");
+            } else {
+                printOutput("Неизвестная команда");
+            }
+        }
+
+        function handleInput(e) {
+            if (e.key === "Enter") {
+                printOutput(`/${currentPath.join("/")}$> ${input.value}`);
+                executeCommand(input.value);
+                input.value = "";
+                commandBuffer = "";
+                updateLocation();
+            } else if (e.key === "Backspace") {
+                if (commandBuffer.length > 0) {
+                    commandBuffer = commandBuffer.slice(0, -1);
+                }
+            } else if (e.key.length === 1) {
+                commandBuffer += e.key;
+            }
+            locationSpan.textContent = `/${currentPath.join("/")}$>` + commandBuffer;
+        }
+
+        input.addEventListener("keydown", handleInput);
+
+        input.addEventListener("input", (e) => {
+            commandBuffer = input.value;
+            locationSpan.textContent = `/${currentPath.join("/")}$>` + commandBuffer;
+        });
+
+        updateLocation();
+
+        // Автоматическое перемещение фокуса на input при загрузке страницы
+        input.style.display = "block";
+        input.focus();
+    </script>
+</body>
+</html>
