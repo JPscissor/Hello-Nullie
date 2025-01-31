@@ -53,6 +53,23 @@
             from, to { opacity: 1; }
             50% { opacity: 0; }
         }
+        #terminal-button {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 2px solid green;
+            color: green;
+            font-family: monospace;
+            text-decoration: none;
+            background: transparent;
+            transition: background 0.3s, color 0.3s;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+        #terminal-button:hover {
+            background: green;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -60,45 +77,22 @@
         <div id="terminal"></div>
         <span id="location">/home$></span><span class="cursor"></span>
         <input id="commandInput" autofocus>
+        <a href="https://t.me/lavandosovahata" id="terminal-button">@lavandosovahata</a>
     </div>
     <script>
         const fileSystem = {
             "home": {
                 "file1.txt": "Привет, это файл!",
-                "CanSomeoneHearMe.txt": "Ау, кто-нибудь слышит меня??? Пожалуйста!! Я здесь!!!\nЕсли вы читаете это, пожалуйста, найдите меня!!",
+                "CanSomeoneHearMe.txt": "Ау, кто-нибудь слышит меня??? Пожалуйста!! Я здесь!!!",
                 "projects": {
                     "app.js": "console.log('Hello')",
                     "README.md": "Это проектное описание",
                     "logo.png": "./images/logo.png"
-                },
-                "documents": {
-                    "report.pdf": "Это отчет",
-                    "notes.txt": "Эти заметки важны",
-                    "null.png": "./images/null.png"
-                },
-                "random_files": {
-                    "note1.txt": "Заметка номер один",
-                    "image1.png": "./images/image1.png",
-                    "config.json": '{"version": "1.0"}'
                 }
             },
             "docs": {
                 "readme.txt": "Это документация",
-                "config.json": '{"version": "1.0"}',
-                "logs": {
-                    "error.log": "Ошибка в системе",
-                    "access.log": "Пользователь вошел в систему"
-                }
-            },
-            "system": {
-                "logs": {
-                    "error.log": "Ошибка в системе",
-                    "access.log": "Пользователь вошел в систему"
-                },
-                "settings": {
-                    "config.ini": "[Settings]\nlanguage=en\ntheme=dark",
-                    "preferences.txt": "Настройки пользователя"
-                }
+                "config.json": '{"version": "1.0"}'
             }
         };
 
